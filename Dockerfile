@@ -1,16 +1,14 @@
 FROM quay.io/jeffdean/node-alpine
 
 ADD . /my-app
-
-USER 53553
+RUN useradd -U 53553 -M -s /usr/sbin/nologin && npm install
 
 EXPOSE 3000
 
 WORKDIR /my-app
 
-ENTRYPOINT ["sh", "-c"]
-
 CMD ["npm", "start"]
 
+USER 53553
 
 

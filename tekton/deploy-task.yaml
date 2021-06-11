@@ -12,30 +12,28 @@ spec:
     - name: source
       description: contains the cloned git repo
   results:
-    - name: service-port
-    - name: resource-type
+    - name: out
   steps:
     - name: deploy
       image: docker.io/enzobarrett/kubectl:latest
       script: |
         #!/bin/sh
-        cd source
+        cd /workspace/source
         set -e
         APP_NAMESPACE="$(params.app-namespace)"
 
         echo -e "Deploying into: ${APP_NAMESPACE}"
-        kubectl apply -n ${APP_NAMESPACE} -f ./k8s/manifests.yaml --validate=false > results.out
-        cat results.out
+        kubectl apply -n ${APP_NAMESPACE} -f ./k8s/manifests.yaml --validate=false | tee $(results.out.path)
     - name: verify-deploy
       image: docker.io/enzobarrett/kubectl:latest
       script: |
         #!/bin/sh
-        cd source
+        cd /workspace/source
         set -e
         APP_NAMESPACE="$(params.app-namespace)"
         APP_NAME="$(params.app-name)"
 
-        cat results.out | \
+        cat $(results.out) | \
           grep -E "deployment|statefulset|integrationserver|queuemanager" | \
           sed "s/deployment.apps/deployment/g" | \
           sed "s/statefulset.apps/statefulset/g" | \
