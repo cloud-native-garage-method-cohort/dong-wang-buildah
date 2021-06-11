@@ -1,0 +1,79 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: my-app-pipeline
+spec:
+  workspaces:
+    - name: shared-data
+    - name: sslcertdir
+  tasks:
+    - name: fetch-repos
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: https://github.com/cloud-native-garage-method-cohort/dong-wang-buildah.git
+        - name: revision
+          value: "main"
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+    - name: build-push
+      taskRef:
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: shared-data
+        - name: sslcertdir
+          workspace: sslcertdir
+      runAfter:
+        - fetch-repos
+      params:
+        - name: IMAGE
+          value: quay.io/dongtest/my-app
+    - name: build-kustomize
+      taskRef:
+        name: kustomize-build
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: app-namespace
+          value: "tekton-practice"
+        - name: app-name
+          value: "my-app"
+        - name: image-with-tag
+          value: quay.io/dongtest/my-app:latest
+      runAfter:
+        - build-push
+    - name: deploy
+      taskRef:
+        name: test-deploy
+      params:
+        - name: app-namespace
+          value: "tekton-practice"
+        - name: app-name
+          value: "my-app"
+      workspaces:
+        - name: source
+          workspace: shared-data
+      runAfter:
+        - build-kustomize
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: my-app-pipeline-run
+spec:
+  pipelineRef:
+    name: my-app-pipeline
+  workspaces:
+    - name: shared-data
+      persistentvolumeclaim:
+        claimName: my-app-pvc
+    - name: sslcertdir
+      emptyDir: {}

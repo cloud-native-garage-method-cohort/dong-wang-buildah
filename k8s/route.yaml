@@ -1,0 +1,12 @@
+piVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: my-app
+spec:
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: my-app
+    weight: 100
+  wildcardPolicy: None
