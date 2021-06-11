@@ -22,7 +22,7 @@ spec:
             - name: LOG_LEVEL
               value: debug
           image: quay.io/dongtest/my-app
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
             httpGet:
